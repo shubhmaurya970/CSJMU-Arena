@@ -27,12 +27,19 @@ public class UserService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already registered.");
         }
+        Role role = request.getRole();
 
+        if (role == null) {
+            role = Role.STUDENT;
+        }
+        if (role == Role.ADMIN) {
+            throw new RuntimeException("You cannot register as Admin.");
+        }
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.STUDENT)
+                .role(role)
                 .build();
 
         User savedUser = userRepository.save(user);

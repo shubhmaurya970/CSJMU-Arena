@@ -12,8 +12,10 @@ import org.springframework.security.config.annotation.authentication.configurati
 import com.csjmu.arena.security.JwtFilter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -45,7 +47,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter,
                         UsernamePasswordAuthenticationFilter.class)
 
-                .httpBasic(Customizer.withDefaults());
+                ;
 
         return http.build();
 
