@@ -5,7 +5,8 @@ import com.csjmu.arena.response.ApiResponse;
 import com.csjmu.arena.service.EventService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import com.csjmu.arena.dto.AdminDashboardResponse;
+import com.csjmu.arena.service.AdminService;
 import java.util.List;
 
 @RestController
@@ -14,9 +15,14 @@ import java.util.List;
 public class AdminController {
 
     private final EventService eventService;
+    private final AdminService adminService;
 
-    public AdminController(EventService eventService) {
+    public AdminController(EventService eventService,
+                           AdminService adminService) {
+
         this.eventService = eventService;
+        this.adminService = adminService;
+
     }
 
     @GetMapping("/events/pending")
@@ -42,5 +48,30 @@ public class AdminController {
                 .data(response)
                 .build();
     }
+    @PatchMapping("/events/{id}/reject")
+    public ApiResponse<EventResponse> rejectEvent(
+            @PathVariable Long id) {
+
+        EventResponse response = eventService.rejectEvent(id);
+
+        return ApiResponse.<EventResponse>builder()
+                .success(true)
+                .message("Event rejected successfully.")
+                .data(response)
+                .build();
+    }
+    @GetMapping("/dashboard")
+    public ApiResponse<AdminDashboardResponse> getDashboard() {
+
+        AdminDashboardResponse response =
+                adminService.getDashboardStats();
+
+        return ApiResponse.<AdminDashboardResponse>builder()
+                .success(true)
+                .message("Dashboard statistics fetched successfully.")
+                .data(response)
+                .build();
+    }
+
 
 }

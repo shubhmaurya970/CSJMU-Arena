@@ -5,11 +5,14 @@ import com.csjmu.arena.dto.EventResponse;
 import com.csjmu.arena.entity.Event;
 import com.csjmu.arena.entity.EventStatus;
 import com.csjmu.arena.entity.User;
+import com.csjmu.arena.mapper.EventMapper;
 import com.csjmu.arena.repository.EventRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
 import com.csjmu.arena.security.SecurityUtil;
+import org.springframework.stereotype.Service;
+import com.csjmu.arena.dto.OrganizerDashboardResponse;
+import com.csjmu.arena.entity.EventCategory;
 import java.util.List;
+import java.time.LocalDate;
 
 @Service
 public class EventService {
@@ -24,7 +27,7 @@ public class EventService {
         this.securityUtil = securityUtil;
     }
 
-    public EventResponse createEvent(CreateEventRequest request){
+    public EventResponse createEvent(CreateEventRequest request) {
 
         User organizer = securityUtil.getCurrentUser();
 
@@ -44,63 +47,26 @@ public class EventService {
 
         Event savedEvent = eventRepository.save(event);
 
-        return EventResponse.builder()
-                .id(savedEvent.getId())
-                .title(savedEvent.getTitle())
-                .description(savedEvent.getDescription())
-                .venue(savedEvent.getVenue())
-                .eventDate(savedEvent.getEventDate())
-                .registrationDeadline(savedEvent.getRegistrationDeadline())
-                .category(savedEvent.getCategory())
-                .status(savedEvent.getStatus())
-                .maxParticipants(savedEvent.getMaxParticipants())
-                .registrationFee(savedEvent.getRegistrationFee())
-                .imageUrl(savedEvent.getImageUrl())
-                .organizerName(savedEvent.getOrganizer().getFullName())
-                .build();
+        return EventMapper.toResponse(savedEvent);
     }
+
     public List<EventResponse> getAllApprovedEvents() {
 
         List<Event> events =
                 eventRepository.findByStatus(EventStatus.APPROVED);
 
         return events.stream()
-                .map(event -> EventResponse.builder()
-                        .id(event.getId())
-                        .title(event.getTitle())
-                        .description(event.getDescription())
-                        .venue(event.getVenue())
-                        .eventDate(event.getEventDate())
-                        .registrationDeadline(event.getRegistrationDeadline())
-                        .category(event.getCategory())
-                        .status(event.getStatus())
-                        .maxParticipants(event.getMaxParticipants())
-                        .registrationFee(event.getRegistrationFee())
-                        .imageUrl(event.getImageUrl())
-                        .organizerName(event.getOrganizer().getFullName())
-                        .build())
+                .map(EventMapper::toResponse)
                 .toList();
     }
+
     public List<EventResponse> getAllPendingEvents() {
 
         List<Event> events =
                 eventRepository.findByStatus(EventStatus.PENDING);
 
         return events.stream()
-                .map(event -> EventResponse.builder()
-                        .id(event.getId())
-                        .title(event.getTitle())
-                        .description(event.getDescription())
-                        .venue(event.getVenue())
-                        .eventDate(event.getEventDate())
-                        .registrationDeadline(event.getRegistrationDeadline())
-                        .category(event.getCategory())
-                        .status(event.getStatus())
-                        .maxParticipants(event.getMaxParticipants())
-                        .registrationFee(event.getRegistrationFee())
-                        .imageUrl(event.getImageUrl())
-                        .organizerName(event.getOrganizer().getFullName())
-                        .build())
+                .map(EventMapper::toResponse)
                 .toList();
     }
 
@@ -110,21 +76,9 @@ public class EventService {
                 .orElseThrow(() ->
                         new RuntimeException("Event not found."));
 
-        return EventResponse.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .description(event.getDescription())
-                .venue(event.getVenue())
-                .eventDate(event.getEventDate())
-                .registrationDeadline(event.getRegistrationDeadline())
-                .category(event.getCategory())
-                .status(event.getStatus())
-                .maxParticipants(event.getMaxParticipants())
-                .registrationFee(event.getRegistrationFee())
-                .imageUrl(event.getImageUrl())
-                .organizerName(event.getOrganizer().getFullName())
-                .build();
+        return EventMapper.toResponse(event);
     }
+
     public EventResponse approveEvent(Long id) {
 
         Event event = eventRepository.findById(id)
@@ -135,20 +89,103 @@ public class EventService {
 
         Event updatedEvent = eventRepository.save(event);
 
-        return EventResponse.builder()
-                .id(updatedEvent.getId())
-                .title(updatedEvent.getTitle())
-                .description(updatedEvent.getDescription())
-                .venue(updatedEvent.getVenue())
-                .eventDate(updatedEvent.getEventDate())
-                .registrationDeadline(updatedEvent.getRegistrationDeadline())
-                .category(updatedEvent.getCategory())
-                .status(updatedEvent.getStatus())
-                .maxParticipants(updatedEvent.getMaxParticipants())
-                .registrationFee(updatedEvent.getRegistrationFee())
-                .imageUrl(updatedEvent.getImageUrl())
-                .organizerName(updatedEvent.getOrganizer().getFullName())
+        return EventMapper.toResponse(updatedEvent);
+    }
+    public List<EventResponse> getMyEvents() {
+
+        User organizer = securityUtil.getCurrentUser();
+
+        List<Event> events =
+                eventRepository.findByOrganizer(organizer);
+
+        return events.stream()
+                .map(EventMapper::toResponse)
+                .toList();
+    }
+    public EventResponse rejectEvent(Long id) {
+
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Event not found."));
+
+        event.setStatus(EventStatus.REJECTED);
+
+        Event updatedEvent = eventRepository.save(event);
+
+        return EventMapper.toResponse(updatedEvent);
+    }
+    public void deleteEvent(Long id) {
+
+        User organizer = securityUtil.getCurrentUser();
+
+        Event event = eventRepository
+                .findByIdAndOrganizer(id, organizer)
+                .orElseThrow(() ->
+                        new RuntimeException("Event not found."));
+
+        if (event.getStatus() != EventStatus.PENDING
+                && event.getStatus() != EventStatus.REJECTED) {
+
+            throw new RuntimeException(
+                    "Only pending or rejected events can be deleted.");
+        }
+
+        eventRepository.delete(event);
+    }
+    public OrganizerDashboardResponse getOrganizerDashboard() {
+
+        User organizer = securityUtil.getCurrentUser();
+
+        return OrganizerDashboardResponse.builder()
+                .totalEvents(
+                        eventRepository.countByOrganizer(organizer))
+                .pendingEvents(
+                        eventRepository.countByOrganizerAndStatus(
+                                organizer,
+                                EventStatus.PENDING))
+                .approvedEvents(
+                        eventRepository.countByOrganizerAndStatus(
+                                organizer,
+                                EventStatus.APPROVED))
+                .rejectedEvents(
+                        eventRepository.countByOrganizerAndStatus(
+                                organizer,
+                                EventStatus.REJECTED))
                 .build();
+    }
+    public List<EventResponse> searchEvents(String keyword) {
+
+        List<Event> events =
+                eventRepository.findByStatusAndTitleContainingIgnoreCase(
+                        EventStatus.APPROVED,
+                        keyword);
+
+        return events.stream()
+                .map(EventMapper::toResponse)
+                .toList();
+    }
+    public List<EventResponse> getEventsByCategory(EventCategory category) {
+
+        List<Event> events =
+                eventRepository.findByStatusAndCategory(
+                        EventStatus.APPROVED,
+                        category);
+
+        return events.stream()
+                .map(EventMapper::toResponse)
+                .toList();
+    }
+    public List<EventResponse> getUpcomingEvents() {
+
+        List<Event> events =
+                eventRepository
+                        .findByStatusAndEventDateGreaterThanEqualOrderByEventDateAsc(
+                                EventStatus.APPROVED,
+                                LocalDate.now());
+
+        return events.stream()
+                .map(EventMapper::toResponse)
+                .toList();
     }
 
 }
