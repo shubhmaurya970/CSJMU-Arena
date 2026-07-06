@@ -13,6 +13,8 @@ import com.csjmu.arena.dto.OrganizerDashboardResponse;
 import com.csjmu.arena.entity.EventCategory;
 import java.util.List;
 import java.time.LocalDate;
+import com.csjmu.arena.exception.ResourceNotFoundException;
+import com.csjmu.arena.exception.UnauthorizedActionException;
 
 @Service
 public class EventService {
@@ -74,7 +76,7 @@ public class EventService {
 
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Event not found."));
+                        new ResourceNotFoundException("Event not found."));
 
         return EventMapper.toResponse(event);
     }
@@ -83,7 +85,7 @@ public class EventService {
 
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Event not found."));
+                        new ResourceNotFoundException("Event not found."));
 
         event.setStatus(EventStatus.APPROVED);
 
@@ -106,7 +108,7 @@ public class EventService {
 
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Event not found."));
+                        new ResourceNotFoundException("Event not found."));
 
         event.setStatus(EventStatus.REJECTED);
 
@@ -121,12 +123,12 @@ public class EventService {
         Event event = eventRepository
                 .findByIdAndOrganizer(id, organizer)
                 .orElseThrow(() ->
-                        new RuntimeException("Event not found."));
+                        new ResourceNotFoundException("Event not found."));
 
         if (event.getStatus() != EventStatus.PENDING
                 && event.getStatus() != EventStatus.REJECTED) {
 
-            throw new RuntimeException(
+            throw new UnauthorizedActionException(
                     "Only pending or rejected events can be deleted.");
         }
 
