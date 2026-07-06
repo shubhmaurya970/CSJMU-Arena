@@ -13,6 +13,7 @@ import com.csjmu.arena.security.JwtFilter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableMethodSecurity
@@ -37,6 +38,9 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/api/auth/login"
                         ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/events/**")
+                        .permitAll()
 
                         .anyRequest().authenticated()
                 )

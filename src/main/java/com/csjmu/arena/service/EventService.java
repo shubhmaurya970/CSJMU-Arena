@@ -9,6 +9,7 @@ import com.csjmu.arena.repository.EventRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import com.csjmu.arena.security.SecurityUtil;
+import java.util.List;
 
 @Service
 public class EventService {
@@ -58,4 +59,96 @@ public class EventService {
                 .organizerName(savedEvent.getOrganizer().getFullName())
                 .build();
     }
+    public List<EventResponse> getAllApprovedEvents() {
+
+        List<Event> events =
+                eventRepository.findByStatus(EventStatus.APPROVED);
+
+        return events.stream()
+                .map(event -> EventResponse.builder()
+                        .id(event.getId())
+                        .title(event.getTitle())
+                        .description(event.getDescription())
+                        .venue(event.getVenue())
+                        .eventDate(event.getEventDate())
+                        .registrationDeadline(event.getRegistrationDeadline())
+                        .category(event.getCategory())
+                        .status(event.getStatus())
+                        .maxParticipants(event.getMaxParticipants())
+                        .registrationFee(event.getRegistrationFee())
+                        .imageUrl(event.getImageUrl())
+                        .organizerName(event.getOrganizer().getFullName())
+                        .build())
+                .toList();
+    }
+    public List<EventResponse> getAllPendingEvents() {
+
+        List<Event> events =
+                eventRepository.findByStatus(EventStatus.PENDING);
+
+        return events.stream()
+                .map(event -> EventResponse.builder()
+                        .id(event.getId())
+                        .title(event.getTitle())
+                        .description(event.getDescription())
+                        .venue(event.getVenue())
+                        .eventDate(event.getEventDate())
+                        .registrationDeadline(event.getRegistrationDeadline())
+                        .category(event.getCategory())
+                        .status(event.getStatus())
+                        .maxParticipants(event.getMaxParticipants())
+                        .registrationFee(event.getRegistrationFee())
+                        .imageUrl(event.getImageUrl())
+                        .organizerName(event.getOrganizer().getFullName())
+                        .build())
+                .toList();
+    }
+
+    public EventResponse getEventById(Long id) {
+
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Event not found."));
+
+        return EventResponse.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .venue(event.getVenue())
+                .eventDate(event.getEventDate())
+                .registrationDeadline(event.getRegistrationDeadline())
+                .category(event.getCategory())
+                .status(event.getStatus())
+                .maxParticipants(event.getMaxParticipants())
+                .registrationFee(event.getRegistrationFee())
+                .imageUrl(event.getImageUrl())
+                .organizerName(event.getOrganizer().getFullName())
+                .build();
+    }
+    public EventResponse approveEvent(Long id) {
+
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Event not found."));
+
+        event.setStatus(EventStatus.APPROVED);
+
+        Event updatedEvent = eventRepository.save(event);
+
+        return EventResponse.builder()
+                .id(updatedEvent.getId())
+                .title(updatedEvent.getTitle())
+                .description(updatedEvent.getDescription())
+                .venue(updatedEvent.getVenue())
+                .eventDate(updatedEvent.getEventDate())
+                .registrationDeadline(updatedEvent.getRegistrationDeadline())
+                .category(updatedEvent.getCategory())
+                .status(updatedEvent.getStatus())
+                .maxParticipants(updatedEvent.getMaxParticipants())
+                .registrationFee(updatedEvent.getRegistrationFee())
+                .imageUrl(updatedEvent.getImageUrl())
+                .organizerName(updatedEvent.getOrganizer().getFullName())
+                .build();
+    }
+
 }

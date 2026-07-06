@@ -7,6 +7,7 @@ import com.csjmu.arena.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/events")
@@ -28,6 +29,29 @@ public class EventController {
         return ApiResponse.<EventResponse>builder()
                 .success(true)
                 .message("Event submitted for approval.")
+                .data(response)
+                .build();
+    }
+    @GetMapping
+    public ApiResponse<List<EventResponse>> getAllApprovedEvents() {
+
+        List<EventResponse> events = eventService.getAllApprovedEvents();
+
+        return ApiResponse.<List<EventResponse>>builder()
+                .success(true)
+                .message("Events fetched successfully.")
+                .data(events)
+                .build();
+    }
+    @GetMapping("/{id}")
+    public ApiResponse<EventResponse> getEventById(
+            @PathVariable Long id) {
+
+        EventResponse response = eventService.getEventById(id);
+
+        return ApiResponse.<EventResponse>builder()
+                .success(true)
+                .message("Event fetched successfully.")
                 .data(response)
                 .build();
     }
